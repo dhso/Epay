@@ -1,0 +1,43 @@
+# Git相关
+.git
+.gitignore
+.gitattributes
+
+# Docker相关
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 特定文档文件（保留DOCKER-RUN-GUIDE.md）
+README.md
+README-DOCKER.md
+nginx.txt
+IIS.txt
+
+# IDE和编辑器
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件和缓存
+tmp/
+temp/
+cache/
+.cache/
+
+# 安装目录（生产环境不需要）
+# install/
+
+# 备份文件
+*.bak
+*.backup
+*.old
