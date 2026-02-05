@@ -19,7 +19,7 @@ RUN composer config --global audit.abandoned ignore \
 # 阶段2: 生产环境运行时
 FROM php:8.1-fpm-alpine
 
-# 安装必需的系统依赖和PHP扩展（合并为单个RUN减少镜像层）
+# 安装必需的系统依赖、PHP扩展、Nginx和Supervisor
 RUN apk add --no-cache \
     freetype \
     libpng \
@@ -27,7 +27,9 @@ RUN apk add --no-cache \
     libzip \
     oniguruma \
     gmp \
-    fcgi \
+    nginx \
+    supervisor \
+    curl \
     && apk add --no-cache --virtual .build-deps \
     freetype-dev \
     libpng-dev \
@@ -62,6 +64,16 @@ RUN { \
 # 复制自定义PHP配置
 COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
+# 复制Nginx配置
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY default.conf /etc/nginx/conf.d/default.conf
+
+# 复制Supervisor配置
+COPY supervisord.conf /etc/supervisord.conf
+
+# 创建必要的目录
+RUN mkdir -p /run/nginx /var/log/nginx
+
 # 设置工作目录
 WORKDIR /var/www/html
 
@@ -71,12 +83,12 @@ COPY --from=builder --chown=www-data:www-data /app/includes/vendor /var/www/html
 # 复制应用代码，并设置权限（.dockerignore会自动排除不需要的文件）
 COPY --chown=www-data:www-data . /var/www/html
 
-# 暴露PHP-FPM端口
-EXPOSE 9000
+# 暴露Nginx HTTP端口
+EXPOSE 80
 
-# 添加健康检查
+# 添加健康检查（通过HTTP访问nginx）
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
+    CMD curl -f http://localhost/ || exit 1
 
-# 启动PHP-FPM
-CMD ["php-fpm"]
+# 启动Supervisor管理nginx和php-fpm
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
