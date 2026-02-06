@@ -71,8 +71,15 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 # 复制Supervisor配置
 COPY supervisord.conf /etc/supervisord.conf
 
-# 创建必要的目录
-RUN mkdir -p /run/nginx /var/log/nginx
+# 创建必要的目录并设置权限
+RUN mkdir -p /run/nginx /var/log/nginx \
+    /tmp/nginx/client_body \
+    /tmp/nginx/proxy \
+    /tmp/nginx/fastcgi \
+    /tmp/nginx/uwsgi \
+    /tmp/nginx/scgi \
+    && chown -R www-data:www-data /tmp/nginx \
+    && chmod -R 700 /tmp/nginx
 
 # 设置工作目录
 WORKDIR /var/www/html
